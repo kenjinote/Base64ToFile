@@ -1,14 +1,12 @@
 ﻿#pragma comment(linker,"\"/manifestdependency:type='win32' name='Microsoft.Windows.Common-Controls' version='6.0.0.0' processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
 
 #pragma comment(lib, "crypt32")
-#include <windows.h>
 
-TCHAR szClassName[] = TEXT("Window");
+#include <windows.h>
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-	static HWND hEdit;
-	static HWND hButton;
+	static HWND hEdit, hButton;
 	switch (msg)
 	{
 	case WM_CREATE:
@@ -17,22 +15,19 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		hButton = CreateWindow(TEXT("BUTTON"), TEXT("ファイル出力..."), WS_VISIBLE | WS_CHILD, 0, 0, 0, 0, hWnd, (HMENU)IDOK, ((LPCREATESTRUCT)lParam)->hInstance, 0);
 		break;
 	case WM_SIZE:
-		MoveWindow(hEdit, 10, 10, LOWORD(lParam) - 20, HIWORD(lParam) - 20 - 32 - 10, TRUE);
-		MoveWindow(hButton, 10, HIWORD(lParam) - 10 - 32, 256, 32, TRUE);
+		MoveWindow(hEdit, 10, 10, LOWORD(lParam) - 20, HIWORD(lParam) - 62, TRUE);
+		MoveWindow(hButton, 10, HIWORD(lParam) - 42, 256, 32, TRUE);
 		break;
 	case WM_COMMAND:
 		if (LOWORD(wParam) == IDOK)
 		{
-			TCHAR fname[MAX_PATH] = { 0 };
-			TCHAR ftitle[MAX_PATH] = { 0 };
+			TCHAR szFilePath[MAX_PATH] = { 0 };
 			OPENFILENAME of = { 0 };
 			of.lStructSize = sizeof(OPENFILENAME);
 			of.hwndOwner = hWnd;
-			of.lpstrFilter = TEXT("任意のﾌｧｲﾙ (*.*)\0*.*\0\0");
-			of.lpstrFile = fname;
-			of.lpstrFileTitle = ftitle;
+			of.lpstrFilter = TEXT("任意のファイル(*.*)\0*.*\0\0");
+			of.lpstrFile = szFilePath;
 			of.nMaxFile = MAX_PATH;
-			of.nMaxFileTitle = MAX_PATH;
 			of.Flags = OFN_OVERWRITEPROMPT;
 			of.lpstrDefExt = TEXT("bin");
 			of.lpstrTitle = TEXT("ファイルに書き出す");
@@ -53,10 +48,13 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 							{
 								if (CryptStringToBinary(lpByte, nInputTextSize, CRYPT_STRING_BASE64, pszDestination, &nDestinationSize, NULL, NULL))
 								{
-									DWORD tmp;
-									HANDLE hFile = CreateFile(fname, GENERIC_WRITE, FILE_SHARE_WRITE, 0, CREATE_ALWAYS, 0, 0);
-									WriteFile(hFile, pszDestination, nDestinationSize, &tmp, 0);
-									CloseHandle(hFile);
+									HANDLE hFile = CreateFile(szFilePath, GENERIC_WRITE, FILE_SHARE_WRITE, 0, CREATE_ALWAYS, 0, 0);
+									if (hFile != INVALID_HANDLE_VALUE)
+									{
+										DWORD tmp;
+										WriteFile(hFile, pszDestination, nDestinationSize, &tmp, 0);
+										CloseHandle(hFile);
+									}
 								}
 								GlobalFree(pszDestination);
 							}
@@ -78,6 +76,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPreInst, LPSTR pCmdLine, int nCmdShow)
 {
+	TCHAR szClassName[] = TEXT("Window");
 	MSG msg;
 	WNDCLASS wndclass = {
 		CS_HREDRAW | CS_VREDRAW,
